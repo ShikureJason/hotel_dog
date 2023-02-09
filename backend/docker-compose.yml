@@ -1,0 +1,62 @@
+version: '3.9'
+
+networks:
+  web_network:
+    name: hotel
+    driver: bridge
+
+services:
+
+  laravel:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: laravel9_hotel
+    container_name: hotel_laravel9
+    restart: always
+    volumes:
+      - ./src:/var/www
+    networks:
+      - web_network  
+    
+  nginx:
+    image: nginx:1.23.3
+    container_name: hotel_nginx
+    restart: always
+    volumes:
+      - ./src:/var/www
+      - ./nginx/conf:/etc/nginx/conf.d
+    ports:
+      - 8805:80
+    networks:
+      - web_network
+
+  db:
+    image: mariadb:10.9
+    container_name: hotel_db
+    environment:
+      - MYSQL_ROOT_PASSWORD=hotel123
+      - MYSQL_DATABASE=hotel
+      - MYSQL_USER=admin
+      - MYSQL_PASSWORD=1234
+    ports:
+      - "3307:3306"
+    restart: always
+    volumes:
+      - ./mysql/data:/var/lib/mysql
+    networks:
+      - web_network
+
+  phpmyadmin:
+    image: phpmyadmin:5.2.0
+    container_name: hotel_phpmyadmin
+    depends_on:
+      - db
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+    restart: always
+    ports:
+      - 8085:80
+    networks:
+      - web_network
